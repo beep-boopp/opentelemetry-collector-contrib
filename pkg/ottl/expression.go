@@ -24,9 +24,27 @@ import (
 // ExprFunc is a function in OTTL
 type ExprFunc[K any] func(ctx context.Context, tCtx K) (any, error)
 
+// OTTLType represents the static return type of an OTTL expression.
+// This is an exploratory step aligned with the compile-time type validation
+// direction discussed in #45365. Existing code that does not set ReturnType
+// continues to work identically — OTTLTypeUnknown is the zero value.
+type OTTLType int
+
+const (
+	OTTLTypeUnknown OTTLType = iota // zero value — all existing Expr behaviour preserved
+	OTTLTypeString
+	OTTLTypeInt
+	OTTLTypeFloat
+	OTTLTypeBool
+	OTTLTypeMap
+	OTTLTypeSlice
+	OTTLTypeBytes
+)
+
 // Expr is a struct that represents a function
 type Expr[K any] struct {
-	exprFunc ExprFunc[K]
+	exprFunc   ExprFunc[K]
+	ReturnType OTTLType
 }
 
 // Eval invokes the OTTL function

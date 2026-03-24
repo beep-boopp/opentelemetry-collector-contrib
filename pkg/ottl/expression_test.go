@@ -3381,3 +3381,31 @@ func (*errLiteral[K]) isLiteral() {}
 func newErrLiteral(err error) *errLiteral[any] {
 	return &errLiteral[any]{err: err}
 }
+
+// TestExprReturnTypeDefaultsToUnknown is an exploratory test accompanying
+// a proof-of-concept for #45365 step 1. OTTLType attaches static return type
+// metadata to Expr so factories can declare return types at construction time
+// rather than inferring them from runtime errors (see func_is_string.go).
+// No execution semantics are changed — OTTLTypeUnknown is the zero value,
+// preserving all existing behaviour.
+func TestExprReturnTypeDefaultsToUnknown(t *testing.T) {
+	expr := Expr[any]{}
+	assert.Equal(t, OTTLTypeUnknown, expr.ReturnType)
+}
+
+// TestExprReturnTypeExplicitBool shows a factory stamping ReturnType at construction time.
+func TestExprReturnTypeExplicitBool(t *testing.T) {
+	expr := Expr[any]{ReturnType: OTTLTypeBool}
+	assert.Equal(t, OTTLTypeBool, expr.ReturnType)
+}
+
+// TestOTTLTypeCoversPdataValueTypes verifies ordering is stable — Unknown is zero, Bytes is last.
+func TestOTTLTypeCoversPdataValueTypes(t *testing.T) {
+	types := []OTTLType{
+		OTTLTypeUnknown, OTTLTypeString, OTTLTypeInt, OTTLTypeFloat,
+		OTTLTypeBool, OTTLTypeMap, OTTLTypeSlice, OTTLTypeBytes,
+	}
+	assert.Len(t, types, 8)
+	assert.Equal(t, OTTLTypeUnknown, types[0])
+	assert.Equal(t, OTTLTypeBytes, types[len(types)-1])
+}
